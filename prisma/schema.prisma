@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  email         String         @unique
+  password      String
+  role          String         @default("user")
+
+  ratings       Rating[]
+  favorites     Favorite[]
+  notifications Notification[]
+  chatMessages  ChatMessage[]
+  seriesViews   SeriesView[]
+
+  createdAt     DateTime       @default(now())
+}
+
+model Series {
+  id          Int          @id @default(autoincrement())
+  title       String
+  slug        String       @unique
+  cover       String
+  banner      String?
+  genres      String
+  description String
+  type        String       @default("Manhwa")
+  views       Int          @default(0)
+  reads       Int          @default(0)
+
+  ratings     Rating[]
+  chapters    Chapter[]
+  favorites   Favorite[]
+  seriesViews SeriesView[]
+
+  createdAt   DateTime     @default(now())
+}
+
+model Chapter {
+  id            Int      @id @default(autoincrement())
+  chapterNumber Float
+  title         String?
+  pages         String?
+  videoUrl      String?
+
+  seriesId      Int
+  series        Series   @relation(
+    fields: [seriesId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt     DateTime @default(now())
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  score     Int
+  userId    Int
+  seriesId  Int
+
+  user       User     @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  series     Series   @relation(
+    fields: [seriesId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, seriesId])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  seriesId  Int
+
+  user       User     @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  series     Series   @relation(
+    fields: [seriesId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, seriesId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  type      String   @default("info")
+
+  user      User     @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String
+
+  user      User     @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt DateTime @default(now())
+}
+
+model SeriesView {
+  id         Int      @id @default(autoincrement())
+  seriesId   Int
+  userId     Int?
+  identifier String?
+
+  series     Series   @relation(
+    fields: [seriesId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  user       User?    @relation(
+    fields: [userId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  createdAt  DateTime @default(now())
+
+  @@unique([seriesId, userId])
+}
